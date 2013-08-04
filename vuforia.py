@@ -3,7 +3,7 @@ from wsgiref.handlers import format_date_time
 from datetime import datetime
 from time import mktime
 from urlparse import urlparse
-from hashlib import sha1
+from hashlib import sha1, md5
 from hmac import new as hmac
 import json
 
@@ -26,9 +26,13 @@ class Vuforia:
         return hmac(key, message, sha1).digest().encode('base64')
 
     def _get_content_md5(self, req):
+        if req.data:
+            return md5(req.data).hexdigest()
         return "d41d8cd98f00b204e9800998ecf8427e"
 
     def _get_content_type(self, req):
+        if req.get_method() == "POST":
+            return "application/json"
         return ""
 
     def _get_authenticated_response(self, req):
@@ -64,11 +68,22 @@ class Vuforia:
             targets.append(self.get_target_by_id(target_id))
         return targets
 
+    def add_target(self, data):
+        url = '%s/targets' % self.host
+        data = json.dumps(data)
+        req = urllib2.Request(url, data, {'Content-Type': 'application/json'})
+        response = self._get_authenticated_response(req)
+        return json.loads(response.read())['results']
+
 def main():
     v = Vuforia(access_key="YOUR_KEY_HERE",
                 secret_key="YOU_KEY_HERE")
     for target in v.get_targets():
         print target
+
+    image = "http://placehold.it/320x100"
+    metadata = "https://dl.dropboxusercontent.com/s/p9fot1ltr92j5ex/metadata.txt?token_hash=AAHriiVFKXpnX10iekhCBaB2oBDS4bhIbxvg3Ox_Z5N41Q&dl=1"
+    print v.add_target({"name": "Eyadd", "width": "320.0", "image_url": image, "application_metadata_url": metadata})
 
 if __name__ == "__main__":
     main()
