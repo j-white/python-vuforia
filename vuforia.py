@@ -1,4 +1,4 @@
-import urllib2
+import urllib2, base64
 from wsgiref.handlers import format_date_time
 from datetime import datetime
 from time import mktime
@@ -23,11 +23,11 @@ class Vuforia:
         return o.path
 
     def _hmac_sha1_base64(self, key, message):
-        return hmac(key, message, sha1).digest().encode('base64')
+        return base64.b64encode(hmac(key, message, sha1).digest())
 
     def _get_content_md5(self, req):
-        if req.data:
-            return md5(req.data).hexdigest()
+        if req.get_data():
+            return md5(str(req.get_data())).hexdigest()
         return "d41d8cd98f00b204e9800998ecf8427e"
 
     def _get_content_type(self, req):
@@ -48,6 +48,7 @@ class Vuforia:
         req.add_header('Date', rfc1123_date)
         auth_header = 'VWS %s:%s' % (self.access_key, signature)
         req.add_header('Authorization', auth_header)
+        # TODO: Add handelr for error codes like 403 "TargetNameExist"
         return urllib2.urlopen(req)
 
     def get_target_by_id(self, target_id):
@@ -62,6 +63,12 @@ class Vuforia:
         response = self._get_authenticated_response(req)
         return json.loads(response.read())['results']
 
+    def get_summary(self):
+        url = '%s/summary' % self.host
+        req = urllib2.Request(url)
+        response = self._get_authenticated_response(req)
+        return json.loads(response.read())
+
     def get_targets(self):
         targets = []
         for target_id in self.get_target_ids():
@@ -71,19 +78,23 @@ class Vuforia:
     def add_target(self, data):
         url = '%s/targets' % self.host
         data = json.dumps(data)
-        req = urllib2.Request(url, data, {'Content-Type': 'application/json'})
+        req = urllib2.Request(url, data, {'Content-Type': 'application/json; charset=utf-8'})
         response = self._get_authenticated_response(req)
-        return json.loads(response.read())['results']
+        return json.loads(response.read())
 
 def main():
     v = Vuforia(access_key="YOUR_KEY_HERE",
-                secret_key="YOU_KEY_HERE")
+                secret_key="YOUR_KEY_HERE")
     for target in v.get_targets():
         print target
 
-    image = "http://placehold.it/320x100"
-    metadata = "https://dl.dropboxusercontent.com/s/p9fot1ltr92j5ex/metadata.txt?token_hash=AAHriiVFKXpnX10iekhCBaB2oBDS4bhIbxvg3Ox_Z5N41Q&dl=1"
-    print v.add_target({"name": "Eyadd", "width": "320.0", "image_url": image, "application_metadata_url": metadata})
+    print v.get_summary()
+
+    image_file = open('PATH_TO_IMAGE')
+    image = base64.b64encode(image_file.read())
+    metadata_file = open('PATH_TO_METADATAFILE')
+    metadata = base64.b64encode(metadata_file.read())
+    print v.add_target({"name": "zxczxc", "width": "320", "image": image, "application_metadata": metadata, "active_flag": 1})
 
 if __name__ == "__main__":
     main()
