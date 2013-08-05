@@ -31,7 +31,7 @@ class Vuforia:
         return "d41d8cd98f00b204e9800998ecf8427e"
 
     def _get_content_type(self, req):
-        if req.get_method() == "POST":
+        if req.get_method() in ["POST", "PUT"]:
             return "application/json"
         return ""
 
@@ -82,13 +82,29 @@ class Vuforia:
         response = self._get_authenticated_response(req)
         return json.loads(response.read())
 
+    def update_target(self, target_id, data):
+        # Takes time to proccess
+        url = '%s/targets/%s' % (self.host, target_id)
+        data = json.dumps(data)
+        req = urllib2.Request(url, data, {'Content-Type': 'application/json; charset=utf-8'})
+        req.get_method = lambda: 'PUT'
+        response = self._get_authenticated_response(req)
+        return json.loads(response.read())
+
+    def delete_target(self, target_id):
+        # Takes time to proccess
+        url = '%s/targets/%s' % (self.host, target_id)
+        req = urllib2.Request(url)
+        req.get_method = lambda: 'DELETE'
+        response = self._get_authenticated_response(req)
+        return json.loads(response.read())
+
 def main():
     v = Vuforia(access_key="YOUR_KEY_HERE",
                 secret_key="YOUR_KEY_HERE")
     for target in v.get_targets():
         print target
 
-    print v.get_summary()
 
     image_file = open('PATH_TO_IMAGE')
     image = base64.b64encode(image_file.read())
