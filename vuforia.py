@@ -48,7 +48,7 @@ class Vuforia:
         req.add_header('Date', rfc1123_date)
         auth_header = 'VWS %s:%s' % (self.access_key, signature)
         req.add_header('Authorization', auth_header)
-        # TODO: Add handelr for error codes like 403 "TargetNameExist"
+        # TODO: Add handler for error codes like 403 "TargetNameExist"
         return urllib2.urlopen(req)
 
     def get_target_by_id(self, target_id):
@@ -83,7 +83,7 @@ class Vuforia:
         return json.loads(response.read())
 
     def update_target(self, target_id, data):
-        # Takes time to proccess
+        # Takes time to process
         url = '%s/targets/%s' % (self.host, target_id)
         data = json.dumps(data)
         req = urllib2.Request(url, data, {'Content-Type': 'application/json; charset=utf-8'})
@@ -92,7 +92,7 @@ class Vuforia:
         return json.loads(response.read())
 
     def delete_target(self, target_id):
-        # Takes time to proccess
+        # Takes time to process
         url = '%s/targets/%s' % (self.host, target_id)
         req = urllib2.Request(url)
         req.get_method = lambda: 'DELETE'
@@ -104,7 +104,6 @@ def main():
                 secret_key="YOUR_KEY_HERE")
     for target in v.get_targets():
         print target
-
 
     image_file = open('PATH_TO_IMAGE')
     image = base64.b64encode(image_file.read())
