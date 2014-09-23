@@ -1,3 +1,4 @@
+import logging
 import urllib2, base64
 from wsgiref.handlers import format_date_time
 from datetime import datetime
@@ -7,7 +8,56 @@ from hashlib import sha1, md5
 from hmac import new as hmac
 import json
 
-class Vuforia:
+
+
+class VuforiaBaseError(Exception):
+    def __init__(self, exc, response):
+        self.transaction_id = response['transaction_id']
+        self.result_code = response['result_code']
+        self.exc = exc
+
+
+class VuforiaRequestQuotaReached(VuforiaBaseError):
+    pass
+
+
+class VuforiaAuthenticationFailure(VuforiaBaseError):
+    pass
+
+
+class VuforiaRequestTimeTooSkewed(VuforiaBaseError):
+    pass
+
+
+class VuforiaTargetNameExist(VuforiaBaseError):
+    pass
+
+
+class VuforiaUnknownTarget(VuforiaBaseError):
+    pass
+
+
+class VuforiaBadImage(VuforiaBaseError):
+    pass
+
+
+class VuforiaImageTooLarge(VuforiaBaseError):
+    pass
+
+
+class VuforiaMetadataTooLarge(VuforiaBaseError):
+    pass
+
+
+class VuforiaDateRangeError(VuforiaBaseError):
+    pass
+
+
+class VuforiaFail(VuforiaBaseError):
+    pass
+
+
+class Vuforia(object):
     def __init__(self, access_key, secret_key, host="https://vws.vuforia.com"):
         self.access_key = access_key
         self.secret_key = secret_key
@@ -48,8 +98,33 @@ class Vuforia:
         req.add_header('Date', rfc1123_date)
         auth_header = 'VWS %s:%s' % (self.access_key, signature)
         req.add_header('Authorization', auth_header)
-        # TODO: Add handler for error codes like 403 "TargetNameExist"
-        return urllib2.urlopen(req)
+        try:
+            return urllib2.urlopen(req)
+        except urllib2.HTTPError, e:
+            response = json.loads(e.read())
+            result_code = response['result_code']
+            if result_code == 'RequestTimeTooSkewed':
+                raise VuforiaRequestTimeTooSkewed(e, response)
+            elif result_code == 'TargetNameExist':
+                raise VuforiaTargetNameExist(e, response)
+            elif result_code == 'RequestQuotaReached':
+                raise VuforiaRequestQuotaReached(e, response)
+            elif result_code == 'UnknownTarget':
+                raise VuforiaUnknownTarget(e, response)
+            elif result_code == 'BadImage':
+                raise VuforiaBadImage(e, response)
+            elif result_code == 'ImageTooLarge':
+                raise VuforiaImageTooLarge(e, response)
+            elif result_code == 'MetadataTooLarge':
+                raise VuforiaMetadataTooLarge(e, response)
+            elif result_code == 'DateRangeError':
+                raise VuforiaDateRangeError(e, response)
+            elif result_code == 'Fail':
+                raise VuforiaFail(e, response)
+            else:
+                logging.error("Couldn't process %s response from Vuforia" % response)
+
+            raise e  # re-raise the initial exception if can't handle it
 
     def get_target_by_id(self, target_id):
         url = '%s/targets/%s' % (self.host, target_id)
