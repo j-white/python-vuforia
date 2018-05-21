@@ -184,7 +184,7 @@ def main():
     image = base64.b64encode(image_file.read())
     metadata_file = open('PATH_TO_METADATAFILE')
     metadata = base64.b64encode(metadata_file.read())
-    print v.add_target({"name": "zxczxc", "width": "320", "image": image, "application_metadata": metadata, "active_flag": 1})
+    print v.add_target({"name": "zxczxc", "width": float(320),"image": image, "application_metadata": metadata, "active_flag": 1})
 
 if __name__ == "__main__":
     main()
