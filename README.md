@@ -79,7 +79,4 @@ print v.get_duplicate_targets(target_id)
 
 ```python
 print v.get_target_ids()
-```        
-
-
-
+``` 
