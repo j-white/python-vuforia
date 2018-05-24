@@ -9,7 +9,7 @@ Module for interacting with the Vuforia Web Services API (VWS API)
 
 ## USAGE
 
- // Add client with valid credentials here:
+ Add client with valid credentials here:
 
 ```python
 def main():
