@@ -8,7 +8,8 @@ Module for interacting with the Vuforia Web Services API (VWS API)
 
  // Add client with valid credentials here:
 
-```def main():
+```python
+def main():
     v = Vuforia(access_key="YOUR_KEY_HERE",
                 secret_key="YOUR_KEY_HERE")```
 
