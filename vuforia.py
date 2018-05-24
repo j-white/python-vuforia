@@ -121,6 +121,8 @@ class Vuforia(object):
                 raise VuforiaDateRangeError(e, response)
             elif result_code == 'Fail':
                 raise VuforiaFail(e, response)
+            elif result_code == "UnknownTarget":
+                raise VuforiaDoesNotExist(e, response)    
             else:
                 logging.error("Couldn't process %s response from Vuforia" % response)
 
@@ -173,6 +175,12 @@ class Vuforia(object):
         req.get_method = lambda: 'DELETE'
         response = self._get_authenticated_response(req)
         return json.loads(response.read())
+    
+    def get_duplicate_targets(self,target_id):
+        url = '%s/duplicates/%s' % (self.host, target_id)
+        req = urllib2.Request(url)
+        response = self._get_authenticated_response(req)
+        return json.loads(response.read())['similar_targets']
 
 def main():
     v = Vuforia(access_key="YOUR_KEY_HERE",
